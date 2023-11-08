@@ -6,7 +6,6 @@ import pdb
 import time
 import json
 
-import rospy
 import yaml
 os.environ["CUDA_LAUNCH_BLOCKING"] = "1"
 
@@ -39,7 +38,7 @@ device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 print("device is ", device)
 
 # Model Parameters
-model_params_file = os.path.join(os.getcwd(), "Config", MODEL_NAME + ".yaml")
+model_params_file = os.path.join("NeuralBKI", os.getcwd(), "Config", MODEL_NAME + ".yaml")
 with open(model_params_file, "r") as stream:
     try:
         model_params = yaml.safe_load(stream)
@@ -126,10 +125,10 @@ map_object = GlobalMap(
     device=device # Device
 )
 
-if VISUALIZE:
-    rospy.init_node('talker', anonymous=True)
-    map_pub = rospy.Publisher('SemMap_global', MarkerArray, queue_size=10)
-    next_map = MarkerArray()
+# if VISUALIZE:
+#     rospy.init_node('talker', anonymous=True)
+#     map_pub = rospy.Publisher('SemMap_global', rospy.MarkerArray, queue_size=10)
+#     next_map = rospy.MarkerArray()
 
 if GEN_PREDS:
     if not os.path.exists(MODEL_NAME):
@@ -176,7 +175,10 @@ for idx in tqdm(range(len(test_ds))):
         map_object.propagate(pose)
 
         # Add points to map
+        print(f"Points Shape: {points.shape}")
+        print(f"Prediction Labels Shape: {pred_labels.shape}")
         labeled_pc = np.hstack((points, pred_labels))
+        print(f"Stack Shape: {labeled_pc.shape}")
         labeled_pc_torch = torch.from_numpy(labeled_pc).to(device=device, non_blocking=True)
         map_object.update_map(labeled_pc_torch)
         total_t += time.time() - start_t
@@ -184,18 +186,18 @@ for idx in tqdm(range(len(test_ds))):
         current_scene = scene_id
         current_frame_id = frame_id
 
-        if VISUALIZE:
-            if rospy.is_shutdown():
-                exit("Closing Python")
-            try:
-                if MAP_METHOD == "global" or MAP_METHOD == "local":
-                    map = publish_voxels(map_object, grid_params['min_bound'], grid_params['max_bound'], grid_params['grid_size'], colors, next_map)
-                    map_pub.publish(map)
-                elif MAP_METHOD == "local":
-                    map = publish_local_map(map_object.local_map, map_object.centroids, grid_params, colors, next_map)
-                    map_pub.publish(map)
-            except:
-                exit("Publishing broke")
+        # if VISUALIZE:
+        #     if rospy.is_shutdown():
+        #         exit("Closing Python")
+        #     try:
+        #         if MAP_METHOD == "global" or MAP_METHOD == "local":
+        #             map = publish_voxels(map_object, grid_params['min_bound'], grid_params['max_bound'], grid_params['grid_size'], colors, next_map)
+        #             map_pub.publish(map)
+        #         elif MAP_METHOD == "local":
+        #             map = publish_local_map(map_object.local_map, map_object.centroids, grid_params, colors, next_map)
+        #             map_pub.publish(map)
+        #     except:
+        #         exit("Publishing broke")
 
         if MEAS_RESULT:
             if dataset == "semantic_kitti":

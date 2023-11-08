@@ -124,7 +124,7 @@ class KittiDataset(Dataset):
         for seq in self._seqs:
             velodyne_dir = os.path.join(self._directory, seq, 'velodyne')
             label_dir = os.path.join(self._directory, seq, 'labels')
-            preds_dir = os.path.join(self._directory, seq, pred_path)
+            preds_dir = os.path.join("/mnt/scratch/datasets/semantic-kitti",  "darknet53-knn/sequences/", seq, "predictions")
             self._num_frames_scene.append(len(os.listdir(velodyne_dir)))
             self._scene_id += [seq] * len(os.listdir(velodyne_dir))
             frames_list = [os.path.splitext(filename)[0] for filename in sorted(os.listdir(velodyne_dir))]
